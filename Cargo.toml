@@ -13,7 +13,7 @@ path = "src/main.rs"
 [dependencies]
 # The single source of cryptography, used for direct signature and hash timing in
 # the attribution and for deterministic seeding of the workload.
-qtv-crypto = { git = "https://github.com/Quantova/Q-Crypto.git", tag = "v0.2.0" }
+qtv-crypto = { git = "https://github.com/Quantova/Q-Crypto.git", tag = "v0.3.0" }
 
 # The register machine that executes every transaction on the verifying path.
 qtv-vm = { git = "https://github.com/Quantova/QVM.git", tag = "v0.2.0" }

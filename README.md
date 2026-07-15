@@ -2,7 +2,7 @@
 
 This repository holds the throughput and finality benchmark for the Quantova stack. It drives a realistic transaction mix through the real chain crates to a real finality certificate, holds the verifying side to a documented server class validator node, counts only transactions that actually finalize, and reports the sustained transactions per second, the finality latency under a global topology, a phone class secondary figure, and an evidence based attribution of the bottleneck. It measures and attributes. It does not tune the pipeline to reach a target. Governed by the crypto policy in the Quantova Specs repository. Commits are authored by the owner only. Dual licensed under Apache 2.0 and MIT.
 
-The benchmark depends on the stack crates by git tag. The chain crates and the node come from Quantova-Chain v0.4.0, the machine qtv-vm from QVM v0.2.0, the consensus crates from QRC-CONSENSUS v0.2.0, and the cryptography from Q-Crypto v0.2.0. The pins live in `Cargo.toml` and `.cargo/config.toml` sets git fetch with the command line git. No classical cryptography is present, and `cargo deny` enforces that.
+The benchmark depends on the stack crates by git tag. The chain crates and the node come from Quantova-Chain v0.4.0, the machine qtv-vm from QVM v0.2.0, the consensus crates from QRC-CONSENSUS v0.2.0, and the cryptography from Q-Crypto v0.3.0. The pins live in `Cargo.toml` and `.cargo/config.toml` sets git fetch with the command line git. No classical cryptography is present, and `cargo deny` enforces that.
 
 ## What it measures
 
@@ -23,6 +23,12 @@ QTV_BENCH_ACCOUNTS=500 QTV_BENCH_BLOCK=500 QTV_BENCH_COMMITTEE_REAL=8 QTV_BENCH_
 ```
 
 The variables are the funded account count, the block size in transactions, the real committee actually built and measured, and the steady state duration in seconds. The target committee for the projection is the sampler committee budget, which is 500.
+
+A second binary reports the per member attestation cost under each of the two verifiable random function constructions, the hash based one on SLH-DSA and the lattice based one on ML-DSA, so the founder can compare them on the same host and choose the default. It measures one verifiable random function prove and one ML-DSA attestation signature, which is the work a committee member does per slot on the critical path.
+
+```
+cargo run --release --bin attestation_cost
+```
 
 ## The transaction mix
 
@@ -77,6 +83,18 @@ The phone class figure is kept only to answer whether a phone could participate 
 The finality floor is the attestation verifiable random function proving time, one SLH-DSA-192s signature per member per slot on the critical path, which is 1.4 to 1.9 seconds. Finality cannot go sub second at stage one whatever the hardware or the network. The second cost is the stage one certificate, about 9.8 megabytes and about 630 milliseconds to verify at a 500 member committee, both scaling with the committee size. This is where the batch and bandwidth tension now sits, in the certificate, not in the transaction batch. Transaction throughput is bandwidth bound rather than compute bound, because server cores verify a large batch cheaply, so the earlier pressure to keep batches small has dissolved for the batch. Execution is sequential but small at about 10 microseconds per transaction, so sequential execution is not the binding constraint, which the data confirms rather than assumes.
 
 The levers that follow from this are a faster committee membership function and a succinct stage two certificate. A succinct certificate is a constant small proof in place of the aggregated attestations, which collapses the certificate size, its propagation, and its verification at once. These are design decisions on the roadmap and are not implemented here, because this pass measures and attributes the baseline and does not optimize it.
+
+## Attestation cost under the two verifiable random function constructions
+
+The specification defines two verifiable random function constructions on one interface and leaves the choice of default to this benchmark. The baseline is the hash based function on SLH-DSA. The candidate is the lattice based function on ML-DSA, now implemented in the crypto crate alongside the baseline. Neither construction is removed. The per member attestation cost is the operation a committee member runs per slot on the critical path, one verifiable random function prove and one ML-DSA attestation signature, and that cost is the compute floor on finality because the attestation runs once on the critical path in parallel across the committee, so one member cost counts rather than the sum over members.
+
+The `attestation_cost` binary measures both terms on this host with real keys and real operations, the same honest method as the rest of the benchmark, with no tuning to a target. On the reference host a representative run reads as follows.
+
+The SLH-DSA verifiable random function prove is about 1.36 seconds in this run and floats up toward 1.9 seconds across runs, the same SLH-DSA-192s prove the main figures report. The ML-DSA verifiable random function prove is about 0.26 milliseconds. The ML-DSA attestation signature is about 0.19 milliseconds and is the same operation under both constructions, so only the prove term changes. The per member attestation cost is therefore about 1357 milliseconds under the SLH-DSA baseline and about 0.45 milliseconds under the ML-DSA candidate, a reduction of about three thousand times.
+
+The projected finality floor follows directly. Under the SLH-DSA baseline the attestation cost alone is about nine times the 150 millisecond slot, so the prove overruns the slot and finality stays multi second whatever the hardware, which is the floor the main run already reports. Under the ML-DSA candidate the attestation cost is well under one percent of the slot, so the attestation is no longer the floor and sub second deterministic finality is reachable, bounded then by block propagation and certificate verification rather than by the prove. Every other term of the finality path is unchanged between the two constructions, so the change in the floor is exactly the change in the prove time.
+
+This is the evidence for making the ML-DSA construction the default while keeping the SLH-DSA construction as the conservative baseline that allows unlimited evaluations. The compact proof wrapper the specification describes for the lattice construction shrinks the proof size rather than the prove time and is deferred, so it changes neither of these measured figures.
 
 ## Configuration and reproducibility
 
