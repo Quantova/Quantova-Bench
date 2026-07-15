@@ -9,13 +9,13 @@ use qtv_sampler::validator::SamplerValidator;
 
 /// The wire size of one stage one attestation: the ML-DSA signature, the VRF
 pub const PER_ATTESTATION_BYTES: usize = qtv_crypto::ml_dsa::SIGNATURE_BYTES
-    + qtv_crypto::vrf::PROOF_BYTES
-    + qtv_crypto::vrf::OUTPUT_BYTES
+    + qtv_crypto::vrf_mldsa::PROOF_BYTES
+    + qtv_crypto::vrf_mldsa::OUTPUT_BYTES
     + 24;
 
 /// The wire size of one committee member entry a verifier must hold: the ML-DSA
 pub const PER_MEMBER_KEY_BYTES: usize =
-    qtv_crypto::ml_dsa::PUBLIC_KEY_BYTES + qtv_crypto::vrf::PUBLIC_KEY_BYTES;
+    qtv_crypto::ml_dsa::PUBLIC_KEY_BYTES + qtv_crypto::vrf_mldsa::PUBLIC_KEY_BYTES;
 
 /// A built real certificate, its committee commitment, and the beacon it was
 pub struct RealCertificate {

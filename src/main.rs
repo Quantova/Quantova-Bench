@@ -104,7 +104,7 @@ fn main() {
     println!(" Quantova throughput and finality benchmark");
     println!("================================================================================");
     println!(" Build: release, lto, one codegen unit. Stack pinned by git tag:");
-    println!("   Quantova-Chain v0.4.0, QVM v0.2.0, QRC-CONSENSUS v0.2.0, Q-Crypto v0.3.0");
+    println!("   Quantova-Chain v0.4.0, QVM v0.2.0, QRC-CONSENSUS v0.3.0, Q-Crypto v0.3.0");
     println!();
     println!(" Primary (server class) validator node profile:");
     println!("   {}", server.name);
