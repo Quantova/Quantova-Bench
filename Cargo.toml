@@ -1,0 +1,42 @@
+[package]
+name = "qtv-bench"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+description = "The Quantova throughput and finality benchmark: it drives a realistic transaction mix through to finality, holds the verifying validator to a phone class budget, and reports sustained transactions per second, finality latency, and an evidence based attribution of the bottleneck."
+repository = "https://github.com/Quantova/Quantova-Bench"
+
+[[bin]]
+name = "qtv-bench"
+path = "src/main.rs"
+
+[dependencies]
+# The single source of cryptography, used for direct signature and hash timing in
+# the attribution and for deterministic seeding of the workload.
+qtv-crypto = { git = "https://github.com/Quantova/Q-Crypto.git", tag = "v0.2.0" }
+
+# The register machine that executes every transaction on the verifying path.
+qtv-vm = { git = "https://github.com/Quantova/QVM.git", tag = "v0.2.0" }
+
+# The chain library crates and the node, the mempool to finalized block pipeline.
+qtv-idfmt = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.4.0" }
+qtv-codec = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.4.0" }
+qtv-account = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.4.0" }
+qtv-tx = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.4.0" }
+qtv-block = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.4.0" }
+qtv-state = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.4.0" }
+qtv-node = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.4.0" }
+qtv-net = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.4.0" }
+
+# The consensus crates, the committee sampler, the attestation, and the finality
+# certificate the verifying validator checks.
+qtv-attest = { git = "https://github.com/Quantova/QRC-CONSENSUS.git", tag = "v0.2.0" }
+qtv-sampler = { git = "https://github.com/Quantova/QRC-CONSENSUS.git", tag = "v0.2.0" }
+qtv-bft = { git = "https://github.com/Quantova/QRC-CONSENSUS.git", tag = "v0.2.0" }
+
+# The verifying path is the whole measurement, so build it the way a release node
+# would: full optimization, one codegen unit, and link time optimization.
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
