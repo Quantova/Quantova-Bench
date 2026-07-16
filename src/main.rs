@@ -104,7 +104,7 @@ fn main() {
     println!(" Quantova throughput and finality benchmark");
     println!("================================================================================");
     println!(" Build: release, lto, one codegen unit. Stack pinned by git tag:");
-    println!("   Quantova-Chain v0.4.0, QVM v0.2.0, QRC-CONSENSUS v0.3.0, Q-Crypto v0.3.0");
+    println!("   Quantova-Chain v0.5.0, QVM v0.3.0, QRC-CONSENSUS v0.3.0, Q-Crypto v0.3.0");
     println!();
     println!(" Primary (server class) validator node profile:");
     println!("   {}", server.name);
@@ -508,7 +508,7 @@ fn main() {
         "   peak throughput  : {:.0} finalized TPS at batch {} -> {:.0} ms finality",
         peak_tps, peak_batch, peak_finality
     );
-    println!("   finality floor is set by stage-one consensus (VRF prove + certificate) and is");
+    println!("   modelled finality floor is now propagation and verification, not the VRF, and is");
     println!(
         "   near batch-independent; throughput is bandwidth-bound (~{:.0} TPS at {} Gbps).",
         bw_ceiling,
@@ -555,12 +555,13 @@ fn main() {
 
     // ---- bottleneck verdict ----
     println!(" Bottleneck, from the evidence above:");
+    println!("   1. Attestation is no longer the finality floor. The module lattice VRF prove");
     println!(
-        "   1. Attestation VRF prove ({}) is the finality floor. It is one SLH-DSA-192s",
+        "      and sign is {} per member, a fraction of a millisecond, so the modelled",
         ms(attest.median)
     );
-    println!("      signature per member per slot on the critical path, so finality cannot go");
-    println!("      sub-second at stage one regardless of hardware or network.");
+    println!("      finality floor is now block propagation, block verification, attestation");
+    println!("      dissemination, and certificate verification, not the VRF.");
     println!(
         "   2. The stage-one certificate ({:.1} MB, {}) is the second cost: its size and",
         cert_bytes_target as f64 / 1e6,
@@ -582,8 +583,8 @@ fn main() {
         us(exec.median / block_n as f64)
     );
     println!(
-        "   The levers are a faster VRF and a succinct (stage-two) certificate, which collapse"
+        "   The faster VRF lever has landed, module lattice replacing the hash based VRF, so"
     );
-    println!("   both the finality floor and the certificate size and verification at once.");
+    println!("   the remaining levers are propagation and a succinct (stage-two) certificate.");
     println!("================================================================================");
 }
