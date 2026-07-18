@@ -7,8 +7,8 @@ use qtv_net::{duplex, Channel, Identity};
 
 /// Megabytes per second a real post quantum channel seals and opens a payload
 pub fn seal_open_mbps(payload: &[u8], reps: u32) -> f64 {
-    let initiator = Identity::from_seed(&[0xA1u8; 32]);
-    let responder = Identity::from_seed(&[0xB2u8; 32]);
+    let initiator = Identity::from_seed(&[161u8; 32]);
+    let responder = Identity::from_seed(&[178u8; 32]);
     let (near, far) = duplex();
 
     let responder_side = thread::spawn(move || Channel::accept(far, &responder).expect("accept"));

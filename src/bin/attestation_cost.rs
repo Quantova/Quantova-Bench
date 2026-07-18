@@ -64,13 +64,13 @@ fn main() {
     let (slh_sk, _slh_pk) = vrf::keygen(b"quantova attestation cost slh-dsa vrf key");
     let (mldsa_vrf_sk, _mldsa_vrf_pk) =
         vrf_mldsa::keygen(b"quantova attestation cost ml-dsa vrf key");
-    let (_attest_pk, attest_sk) = ml_dsa::keygen(&[0x2au8; 32]);
+    let (_attest_pk, attest_sk) = ml_dsa::keygen(&[42u8; 32]);
 
     // The VRF input a committee member evaluates is the sortition seed for the slot;
     // the attestation message is the block-and-slot digest it signs. Representative
     // 32-byte values, the sizes the real path carries.
-    let vrf_input = [0x11u8; 32];
-    let attest_msg = [0x22u8; 32];
+    let vrf_input = [17u8; 32];
+    let attest_msg = [34u8; 32];
     let empty_ctx: [u8; 0] = [];
     let deterministic_rnd = [0u8; 32];
 

@@ -50,7 +50,7 @@ pub struct Workload {
 }
 
 fn derive_accounts(n: usize) -> Vec<KeyAccount> {
-    let master = [0x51u8; 32];
+    let master = [81u8; 32];
     (0..n as u64)
         .map(|i| qtv_account::derive(&master, i))
         .collect()
@@ -58,7 +58,7 @@ fn derive_accounts(n: usize) -> Vec<KeyAccount> {
 
 /// The token contract address the token calls target. Its exact value does not
 fn token_address() -> String {
-    qtv_account::derive(&[0x70u8; 32], 0).address()
+    qtv_account::derive(&[112u8; 32], 0).address()
 }
 
 /// Encode a token transfer call: the recipient and the amount, the arguments the
