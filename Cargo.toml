@@ -22,14 +22,14 @@ qtv-crypto = { git = "https://github.com/Quantova/Q-Crypto.git", rev = "4c0bdcb7
 qtv-vm = { git = "https://github.com/Quantova/QVM.git", tag = "v0.5.3" }
 
 # The chain library crates and the node, the mempool to finalized block pipeline.
-qtv-idfmt = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.7.0" }
-qtv-codec = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.7.0" }
-qtv-account = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.7.0" }
-qtv-tx = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.7.0" }
-qtv-block = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.7.0" }
-qtv-state = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.7.0" }
-qtv-node = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.7.0" }
-qtv-net = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.7.0" }
+qtv-idfmt = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.8.0" }
+qtv-codec = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.8.0" }
+qtv-account = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.8.0" }
+qtv-tx = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.8.0" }
+qtv-block = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.8.0" }
+qtv-state = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.8.0" }
+qtv-node = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.8.0" }
+qtv-net = { git = "https://github.com/Quantova/Quantova-Chain.git", tag = "v0.8.0" }
 
 # The consensus crates, the committee sampler, the attestation, and the finality
 # certificate the verifying validator checks.
