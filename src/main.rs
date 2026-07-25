@@ -106,8 +106,8 @@ fn main() {
     println!("================================================================================");
     println!(" Quantova throughput and finality benchmark");
     println!("================================================================================");
-    println!(" Build: release, lto, one codegen unit. Stack pinned by git tag:");
-    println!("   Quantova-Chain v0.5.0, QVM v0.3.0, QRC-CONSENSUS v0.3.0, Q-Crypto v0.3.0");
+    println!(" Build: release, lto, one codegen unit. Stack pinned to the production flow:");
+    println!("   Quantova-Chain v0.7.0, QVM v0.5.3, QRC-CONSENSUS v0.8.0, Q-Crypto rev 4c0bdcb7");
     println!();
     println!(" Primary (server class) validator node profile:");
     println!("   {}", server.name);
@@ -231,10 +231,14 @@ fn main() {
     // Attestation production: the committee membership VRF and the ML-DSA signature.
     println!("   attestation production (VRF prove + ML-DSA sign), one member ...");
     let attest = Summary::of(&measure(2, || {
-        let a = qtv_attest::Attester::new(1, qtv_bft::params::VALIDATOR_STAKE_QTOV);
+        let a = qtv_attest::Attester::from_secret(
+            1,
+            &consensus::member_secret(1),
+            qtv_bft::params::VALIDATOR_STAKE_QTOV,
+        );
         let beacon = qtv_sampler::beacon::Beacon::genesis();
-        let block = qtv_attest::Block::new(1, 7, qtv_attest::Parent::Genesis);
-        std::hint::black_box(a.attest(1, 1, block, &beacon));
+        let block = qtv_attest::Block::new(1, [7u8; 32], qtv_attest::Parent::Genesis);
+        std::hint::black_box(a.attest(1, 1, 0, block, &beacon));
     }));
     println!(
         "     {:>10} median   (this is per member, done in parallel across the committee)",

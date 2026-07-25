@@ -100,7 +100,7 @@ fn main() {
     println!(" operations. The attestation cost is one VRF prove plus one ML-DSA");
     println!(" attestation signature, what a committee member does per slot on the");
     println!(" critical path. Slot target: {:.0} ms.", SLOT_MS);
-    println!(" Q-Crypto pinned by git tag v0.3.0.");
+    println!(" Q-Crypto pinned by git rev 4c0bdcb7.");
     rule();
     println!(" Measured terms (median, 10-90 spread):");
     println!(

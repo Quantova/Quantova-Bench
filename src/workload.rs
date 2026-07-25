@@ -7,10 +7,11 @@ use std::collections::BTreeMap;
 
 use qtv_account::Account as KeyAccount;
 use qtv_codec::Encoder;
-use qtv_node::execution::{execute_transfer, transfer_call, TRANSFER_GAS};
+use qtv_node::execution::{execute_transfer, transfer_call, TRANSFER_METER};
 use qtv_node::fee::FeeParams;
 use qtv_node::ledger::{Account, Ledger};
 use qtv_tx::{sign, Body, Call, Wrapper};
+use qtv_vm::abi::scalar_key;
 use qtv_vm::asm::assemble;
 use qtv_vm::interp::Interpreter;
 
@@ -101,7 +102,7 @@ impl Workload {
                 Kind::Native
             };
             let (call, gas) = match kind {
-                Kind::Native => (transfer_call(&recipient.address(), AMOUNT), TRANSFER_GAS),
+                Kind::Native => (transfer_call(&recipient.address(), AMOUNT), TRANSFER_METER),
                 Kind::Token => (
                     token_call(&token_addr, &recipient.address(), AMOUNT),
                     TOKEN_GAS,
@@ -140,25 +141,28 @@ fn pick_token(i: usize) -> bool {
 
 /// The native transfer program, the fixed transfer the node runs on the qtv-vm.
 pub fn execute_native(sender_bal: u64, recipient_bal: u64, amount: u64, fee: u64) -> (u64, u64) {
-    let out = execute_transfer(sender_bal, recipient_bal, amount, fee, TRANSFER_GAS)
+    let out = execute_transfer(sender_bal, recipient_bal, amount, fee, TRANSFER_METER)
         .expect("a funded native transfer halts");
     (out.sender_balance, out.recipient_balance)
 }
+
+/// The number of storage slots the token program touches: sender balance,
+const TOKEN_SLOTS: usize = 7;
 
 /// The issuer token standard transfer program: freeze and allowlist checks on
 const TOKEN_PROGRAM: &str = "\
 LDC r0, 0
 LDC r1, 1
-LDI r8, 2
+LDI r8, 64
 SLOAD r9, r8
 JNZ r9, reject
-LDI r8, 3
+LDI r8, 96
 SLOAD r9, r8
 JZ r9, reject
-LDI r8, 4
+LDI r8, 128
 SLOAD r9, r8
 JNZ r9, reject
-LDI r8, 5
+LDI r8, 160
 SLOAD r9, r8
 JZ r9, reject
 ADD r2, r0, r1
@@ -166,11 +170,11 @@ LDI r3, 0
 SLOAD r4, r3
 SUB r4, r4, r2
 SSTORE r3, r4
-LDI r5, 1
+LDI r5, 32
 SLOAD r6, r5
 ADD r6, r6, r0
 SSTORE r5, r6
-LDI r7, 6
+LDI r7, 192
 SLOAD r8, r7
 LDI r9, 1
 ADD r8, r8, r9
@@ -183,20 +187,32 @@ HALT";
 pub fn execute_token(sender_bal: u64, recipient_bal: u64, amount: u64, fee: u64) -> (u64, u64) {
     let code = assemble(TOKEN_PROGRAM).expect("the token program assembles");
     let consts = [amount, fee];
+    // Each slot's 32 byte storage key sits in its own memory cell at offset
+    // `slot * 32`, and storage is keyed by the same key, so the program's SLOAD and
+    // SSTORE offsets resolve to the intended slots.
+    let slot_values: [u64; TOKEN_SLOTS] = [
+        sender_bal,    // slot 0: sender balance
+        recipient_bal, // slot 1: recipient balance
+        0,             // slot 2: sender not frozen
+        1,             // slot 3: sender allowlisted
+        0,             // slot 4: recipient not frozen
+        1,             // slot 5: recipient allowlisted
+        0,             // slot 6: event counter
+    ];
+    let mut memory = [0u8; TOKEN_SLOTS * 32];
     let mut storage = BTreeMap::new();
-    storage.insert(0u64, sender_bal);
-    storage.insert(1u64, recipient_bal);
-    storage.insert(2u64, 0u64); // sender not frozen
-    storage.insert(3u64, 1u64); // sender allowlisted
-    storage.insert(4u64, 0u64); // recipient not frozen
-    storage.insert(5u64, 1u64); // recipient allowlisted
-    storage.insert(6u64, 0u64); // event counter
+    for (slot, &value) in slot_values.iter().enumerate() {
+        let key = scalar_key(slot as u64);
+        memory[slot * 32..slot * 32 + 32].copy_from_slice(&key);
+        storage.insert(key, value);
+    }
     let out = Interpreter::new(&code, &consts, TOKEN_GAS)
         .with_storage(storage)
+        .with_memory(&memory)
         .run()
         .expect("a compliant token transfer halts");
     (
-        out.storage.get(&0).copied().unwrap_or(0),
-        out.storage.get(&1).copied().unwrap_or(0),
+        out.storage.get(&scalar_key(0)).copied().unwrap_or(0),
+        out.storage.get(&scalar_key(1)).copied().unwrap_or(0),
     )
 }
