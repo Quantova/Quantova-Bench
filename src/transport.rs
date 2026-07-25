@@ -1,3 +1,6 @@
+// Copyright 2026 Quantova Inc
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 //! The post quantum transport cost, measured on the real qtv-net channel.
 
 use std::thread;

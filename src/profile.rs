@@ -1,3 +1,6 @@
+// Copyright 2026 Quantova Inc
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 //! The hardware profiles the benchmark holds the verifying side to.
 
 /// A server class validator node profile. The figures are the host this

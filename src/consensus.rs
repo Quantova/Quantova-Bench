@@ -1,3 +1,6 @@
+// Copyright 2026 Quantova Inc
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 //! A real QORUS stage one finality certificate, built from real committee
 
 use qtv_attest::aggregate::aggregate;

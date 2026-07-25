@@ -1,3 +1,6 @@
+// Copyright 2026 Quantova Inc
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 //! Per-member attestation cost under the committee membership VRF.
 
 use std::hint::black_box;

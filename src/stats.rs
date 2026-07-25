@@ -1,3 +1,6 @@
+// Copyright 2026 Quantova Inc
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 //! Summary statistics over a set of timing samples. The benchmark reports the
 
 /// A distribution over samples in nanoseconds.

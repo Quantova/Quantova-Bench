@@ -1,3 +1,6 @@
+// Copyright 2026 Quantova Inc
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 //! The global network model. Validators are globally distributed server nodes,
 
 /// The regions the committee is spread across.
