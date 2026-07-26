@@ -238,7 +238,7 @@ fn main() {
         );
         let beacon = qtv_sampler::beacon::Beacon::genesis();
         let block = qtv_attest::Block::new(1, [7u8; 32], qtv_attest::Parent::Genesis);
-        std::hint::black_box(a.attest(1, 1, 0, block, &beacon));
+        std::hint::black_box(a.attest(consensus::CHAIN_ID, 1, 1, 0, block, &beacon));
     }));
     println!(
         "     {:>10} median   (this is per member, done in parallel across the committee)",

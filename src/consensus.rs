@@ -11,6 +11,9 @@ use qtv_sampler::committee::{CommitteeView, PublishedReveal};
 use qtv_sampler::params::COMMITTEE_BUDGET;
 use qtv_sampler::validator::{Registration, SamplerValidator};
 
+/// The chain the benchmark builds and verifies certificates under. A certificate is bound to
+pub const CHAIN_ID: u64 = qtv_tx::LOCAL_CHAIN_ID;
+
 /// The wire size of one stage one attestation: the ML-DSA signature, the VRF
 pub const PER_ATTESTATION_BYTES: usize = qtv_crypto::ml_dsa::SIGNATURE_BYTES
     + qtv_crypto::vrf::PROOF_BYTES
@@ -86,9 +89,9 @@ impl RealCertificate {
         let tau = finality_threshold(member_ids.len() as u64);
         let attestations: Vec<_> = refs
             .iter()
-            .map(|a| a.attest(height, slot, 0, block, &beacon))
+            .map(|a| a.attest(CHAIN_ID, height, slot, 0, block, &beacon))
             .collect();
-        let cert = aggregate(height, slot, block, &commitment, &beacon, &attestations, tau)
+        let cert = aggregate(CHAIN_ID, height, slot, block, &commitment, &beacon, &attestations, tau)
             .expect("an online committee forms a quorum");
         let attesters = cert.attesters().len();
         RealCertificate {
@@ -103,7 +106,7 @@ impl RealCertificate {
     /// Verify the certificate against its commitment and beacon, the exact check
     pub fn verify(&self) -> bool {
         self.cert
-            .verify(&self.commitment, &self.beacon, self.tau)
+            .verify(CHAIN_ID, &self.commitment, &self.beacon, self.tau)
             .is_verified()
     }
 }
