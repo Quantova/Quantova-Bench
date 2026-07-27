@@ -72,7 +72,7 @@ fn apply_and_root(ledger: &mut Ledger, block: &[SignedTx]) -> [u8; 32] {
         ledger.set_account(&tx.sender, &sender);
         ledger.set_account(&tx.recipient, &recipient);
     }
-    ledger.state_root()
+    ledger.q_root()
 }
 
 fn measure(reps: u32, mut f: impl FnMut()) -> Vec<f64> {
@@ -216,7 +216,7 @@ fn main() {
     // Prime the ledger with the block applied once so the root reflects the block.
     apply_and_root(&mut wl.ledger, &wl.block);
     let root = Summary::of(&measure(20, || {
-        std::hint::black_box(wl.ledger.state_root());
+        std::hint::black_box(wl.ledger.q_root());
     }));
     println!(
         "   state root recompute over {} accounts (whole state)",
@@ -250,7 +250,7 @@ fn main() {
         "   building a real {}-member finality certificate (each attestation runs the VRF) ...",
         committee_real
     );
-    let header_hash = wl.ledger.state_root();
+    let header_hash = wl.ledger.q_root();
     let cert = RealCertificate::build(committee_real, 1, 1, &header_hash);
     assert!(cert.verify(), "the real certificate finalizes its block");
     let certv = Summary::of(&measure(20, || {

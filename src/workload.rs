@@ -18,8 +18,8 @@ use qtv_vm::interp::Interpreter;
 /// The share of the block that is token calls, in basis points. The rest is
 pub const TOKEN_SHARE_BPS: u64 = 3000;
 
-/// The gas limit a token transfer is given. It is larger than a native transfer
-pub const TOKEN_GAS: u64 = 8_000;
+/// The meter limit a token transfer is given. It is larger than a native transfer
+pub const TOKEN_METER: u64 = 8_000;
 
 /// The starting balance every account is funded with, large enough that a long
 const FUNDING: u64 = 1_000_000_000_000;
@@ -101,14 +101,14 @@ impl Workload {
             } else {
                 Kind::Native
             };
-            let (call, gas) = match kind {
+            let (call, meter) = match kind {
                 Kind::Native => (transfer_call(&recipient.address(), AMOUNT), TRANSFER_METER),
                 Kind::Token => (
                     token_call(&token_addr, &recipient.address(), AMOUNT),
-                    TOKEN_GAS,
+                    TOKEN_METER,
                 ),
             };
-            let body = Body::new(sender.address(), 0, gas, u128::from(fee), call);
+            let body = Body::new(sender.address(), 0, meter, u128::from(fee), call);
             let wrapper = sign(sender, &body);
             match kind {
                 Kind::Token => token_calls += 1,
@@ -206,7 +206,7 @@ pub fn execute_token(sender_bal: u64, recipient_bal: u64, amount: u64, fee: u64)
         memory[slot * 32..slot * 32 + 32].copy_from_slice(&key);
         storage.insert(key, value);
     }
-    let out = Interpreter::new(&code, &consts, TOKEN_GAS)
+    let out = Interpreter::new(&code, &consts, TOKEN_METER)
         .with_storage(storage)
         .with_memory(&memory)
         .run()
