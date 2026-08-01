@@ -15,6 +15,7 @@ use qtv_sampler::validator::{Registration, SamplerValidator};
 pub const CHAIN_ID: u64 = qtv_tx::LOCAL_CHAIN_ID;
 
 /// The wire size of one stage one attestation: the ML-DSA signature, the VRF
+#[allow(deprecated)]
 pub const PER_ATTESTATION_BYTES: usize = qtv_crypto::ml_dsa::SIGNATURE_BYTES
     + qtv_crypto::slh_dsa::SIGNATURE_BYTES
     + qtv_vrf::OUTPUT_LEN
