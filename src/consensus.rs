@@ -16,13 +16,13 @@ pub const CHAIN_ID: u64 = qtv_tx::LOCAL_CHAIN_ID;
 
 /// The wire size of one stage one attestation: the ML-DSA signature, the VRF
 pub const PER_ATTESTATION_BYTES: usize = qtv_crypto::ml_dsa::SIGNATURE_BYTES
-    + qtv_crypto::vrf::PROOF_BYTES
-    + qtv_crypto::vrf::OUTPUT_BYTES
+    + qtv_crypto::slh_dsa::SIGNATURE_BYTES
+    + qtv_vrf::OUTPUT_LEN
     + 24;
 
 /// The wire size of one committee member entry a verifier must hold: the ML-DSA
 pub const PER_MEMBER_KEY_BYTES: usize =
-    qtv_crypto::ml_dsa::PUBLIC_KEY_BYTES + qtv_crypto::vrf::PUBLIC_KEY_BYTES;
+    qtv_crypto::ml_dsa::PUBLIC_KEY_BYTES + qtv_crypto::slh_dsa::PUBLIC_KEY_BYTES;
 
 /// A built real certificate, its committee commitment, and the beacon it was
 pub struct RealCertificate {
