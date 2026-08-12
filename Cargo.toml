@@ -34,9 +34,9 @@ qtv-net = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "89843
 
 # The consensus crates, the committee sampler, the attestation, and the finality
 # certificate the verifying validator checks.
-qtv-attest = { git = "https://github.com/Quantova/QRC-CONSENSUS.git", rev = "032324e926c07e42cc03e09b6564a7e238689329" }
-qtv-sampler = { git = "https://github.com/Quantova/QRC-CONSENSUS.git", rev = "032324e926c07e42cc03e09b6564a7e238689329" }
-qtv-bft = { git = "https://github.com/Quantova/QRC-CONSENSUS.git", rev = "032324e926c07e42cc03e09b6564a7e238689329" }
+qtv-attest = { git = "https://github.com/Quantova/QRC-CONSENSUS.git", rev = "7a5e5911a2db20b99b037dbf914db39008397dbe" }
+qtv-sampler = { git = "https://github.com/Quantova/QRC-CONSENSUS.git", rev = "7a5e5911a2db20b99b037dbf914db39008397dbe" }
+qtv-bft = { git = "https://github.com/Quantova/QRC-CONSENSUS.git", rev = "7a5e5911a2db20b99b037dbf914db39008397dbe" }
 
 # The verifying path is the whole measurement, so build it the way a release node
 # would: full optimization, one codegen unit, and link time optimization.
