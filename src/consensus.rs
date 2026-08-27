@@ -90,7 +90,7 @@ impl RealCertificate {
         let tau = finality_threshold(member_ids.len() as u64);
         let attestations: Vec<_> = refs
             .iter()
-            .map(|a| a.attest(CHAIN_ID, height, slot, 0, block, &beacon))
+            .map(|a| a.attest(CHAIN_ID, height, slot, 0, commitment.digest(), block, &beacon))
             .collect();
         let cert = aggregate(CHAIN_ID, height, slot, block, &commitment, &beacon, &attestations, tau)
             .expect("an online committee forms a quorum");
