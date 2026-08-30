@@ -7,8 +7,8 @@
 use std::hint::black_box;
 use std::time::Instant;
 
-use qtv_crypto::{ml_dsa, sha3::shake256, slh_dsa};
-use qtv_vrf::hash_based::HashBasedVrf;
+use qtv_crypto::{ml_dsa, sha3::shake256};
+use qtv_vrf::onetime::OneTimeVrf;
 use qtv_vrf::Vrf;
 
 /// A distribution over nanosecond samples: median and the 10-90 spread.
@@ -67,13 +67,11 @@ fn main() {
     // Real keys. The VRF key pair and the ML-DSA attestation key are each derived
     // from a fixed seed so the run is reproducible, but every operation below is the
     // real signing and hashing path, not a stub.
-    const SEED_LEN: usize = slh_dsa::PUBLIC_KEY_BYTES / 2;
-    let mut vrf_seeds = [0u8; SEED_LEN * 3];
-    shake256(b"quantova attestation cost slh-dsa vrf key", &mut vrf_seeds);
-    let sk_seed: [u8; SEED_LEN] = vrf_seeds[..SEED_LEN].try_into().unwrap();
-    let sk_prf: [u8; SEED_LEN] = vrf_seeds[SEED_LEN..2 * SEED_LEN].try_into().unwrap();
-    let pk_seed: [u8; SEED_LEN] = vrf_seeds[2 * SEED_LEN..].try_into().unwrap();
-    let vrf = HashBasedVrf::keygen(&sk_seed, &sk_prf, &pk_seed);
+    const VRF_HEIGHT: u32 = 10;
+    const VRF_POSITION: u64 = 7;
+    let mut master_seed = [0u8; 32];
+    shake256(b"quantova attestation cost one-time vrf key", &mut master_seed);
+    let vrf = OneTimeVrf::keygen(&master_seed, VRF_HEIGHT).unwrap();
     let (_attest_pk, attest_sk) = ml_dsa::keygen(&[42u8; 32]);
 
     // The VRF input a committee member evaluates is the sortition seed for the slot;
@@ -87,7 +85,7 @@ fn main() {
     // The SLH-DSA VRF prove is slow, so it runs few reps; the ML-DSA sign runs more.
     // Medians and spreads are reported either way.
     let slh_prove = measure(5, || {
-        black_box(vrf.prove(black_box(&vrf_input)).unwrap());
+        black_box(vrf.prove(black_box(VRF_POSITION), black_box(&vrf_input)).unwrap());
     });
     let attest_sign = measure(200, || {
         black_box(ml_dsa::sign(
