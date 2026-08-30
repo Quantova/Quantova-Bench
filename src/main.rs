@@ -589,9 +589,7 @@ fn main() {
         "      minor ({} / tx); sequential execution is not the binding constraint.",
         us(exec.median / block_n as f64)
     );
-    println!(
-        "   The faster VRF lever has landed, module lattice replacing the hash based VRF, so"
-    );
+    println!("   The faster VRF lever has landed, module lattice replacing the hash based VRF, so");
     println!("   the remaining levers are propagation and a succinct (stage-two) certificate.");
     println!("================================================================================");
 }
