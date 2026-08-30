@@ -70,7 +70,10 @@ fn main() {
     const VRF_HEIGHT: u32 = 10;
     const VRF_POSITION: u64 = 7;
     let mut master_seed = [0u8; 32];
-    shake256(b"quantova attestation cost one-time vrf key", &mut master_seed);
+    shake256(
+        b"quantova attestation cost one-time vrf key",
+        &mut master_seed,
+    );
     let vrf = OneTimeVrf::keygen(&master_seed, VRF_HEIGHT).unwrap();
     let (_attest_pk, attest_sk) = ml_dsa::keygen(&[42u8; 32]);
 
@@ -85,7 +88,10 @@ fn main() {
     // The SLH-DSA VRF prove is slow, so it runs few reps; the ML-DSA sign runs more.
     // Medians and spreads are reported either way.
     let slh_prove = measure(5, || {
-        black_box(vrf.prove(black_box(VRF_POSITION), black_box(&vrf_input)).unwrap());
+        black_box(
+            vrf.prove(black_box(VRF_POSITION), black_box(&vrf_input))
+                .unwrap(),
+        );
     });
     let attest_sign = measure(200, || {
         black_box(ml_dsa::sign(
