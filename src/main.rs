@@ -5,6 +5,7 @@
 
 mod consensus;
 mod network;
+mod pins;
 mod profile;
 mod stats;
 mod transport;
@@ -107,7 +108,7 @@ fn main() {
     println!(" Quantova throughput and finality benchmark");
     println!("================================================================================");
     println!(" Build: release, lto, one codegen unit. Stack pinned to the production flow:");
-    println!("   Quantova-Chain 89843bf, QVM v0.5.4, QRC-CONSENSUS v0.9.1, Q-Crypto rev 33c7e93");
+    println!("   {}", pins::stack_line());
     println!();
     println!(" Primary (server class) validator node profile:");
     println!("   {}", server.name);

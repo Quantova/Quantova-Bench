@@ -60,6 +60,9 @@ fn ms(ns: f64) -> String {
     format!("{:.3} ms", ns / 1_000_000.0)
 }
 
+#[path = "../pins.rs"]
+mod pins;
+
 fn main() {
     // The 150 ms slot target, the same consensus parameter the main benchmark uses.
     const SLOT_MS: f64 = 150.0;
@@ -113,7 +116,10 @@ fn main() {
     println!(" operations. The attestation cost is one VRF prove plus one ML-DSA");
     println!(" attestation signature, what a committee member does per slot on the");
     println!(" critical path. Slot target: {:.0} ms.", SLOT_MS);
-    println!(" Q-Crypto pinned by git rev 4c0bdcb7.");
+    println!(
+        " Q-Crypto pinned by git rev {}.",
+        pins::short_rev("qtv-crypto")
+    );
     rule();
     println!(" Measured terms (median, 10-90 spread):");
     println!(
