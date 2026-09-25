@@ -72,12 +72,13 @@ fn main() {
     // real signing and hashing path, not a stub.
     const VRF_HEIGHT: u32 = 10;
     const VRF_POSITION: u64 = 7;
+    const VRF_HOLDER: u64 = 1;
     let mut master_seed = [0u8; 32];
     shake256(
         b"quantova attestation cost one-time vrf key",
         &mut master_seed,
     );
-    let vrf = OneTimeVrf::keygen(&master_seed, VRF_HEIGHT).unwrap();
+    let vrf = OneTimeVrf::keygen(&master_seed, VRF_HEIGHT, VRF_HOLDER).unwrap();
     let (_attest_pk, attest_sk) = ml_dsa::keygen(&[42u8; 32]);
 
     // The VRF input a committee member evaluates is the sortition seed for the slot;

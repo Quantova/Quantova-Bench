@@ -68,7 +68,7 @@ impl RealCertificate {
         let view = CommitteeView::new(sampler.iter().map(Registration::of).collect());
         let published: Vec<PublishedReveal> = sampler
             .iter()
-            .map(|v| PublishedReveal::new(v.id, v.reveal(slot)))
+            .filter_map(|v| v.reveal(slot).map(|c| PublishedReveal::new(v.id, c)))
             .collect();
         let committee = view.form_committee(&beacon, slot, &published);
         assert!(!committee.is_empty(), "the sortition admitted a committee");
@@ -90,7 +90,7 @@ impl RealCertificate {
         let tau = finality_threshold(member_ids.len() as u64);
         let attestations: Vec<_> = refs
             .iter()
-            .map(|a| {
+            .filter_map(|a| {
                 a.attest(
                     CHAIN_ID,
                     height,
