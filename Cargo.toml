@@ -17,7 +17,7 @@ path = "src/main.rs"
 # The single source of cryptography, used for direct signature and hash timing in
 # the attribution and for deterministic seeding of the workload.
 qtv-crypto = { git = "https://github.com/Quantova/Q-Crypto.git", rev = "4abe71e9fa84a6e670e6d5736d7533c3fd10a3ed" }
-qtv-vrf = { git = "https://github.com/Quantova/QVRF.git", rev = "20f97402022e22ce380a90549d8958baf10e16b1" }
+qtv-vrf = { git = "https://github.com/Quantova/QVRF.git", rev = "199a004a84827143ed919ec7357f59b1d1d79879" }
 
 # The register machine that executes every transaction on the verifying path.
 qtv-vm = { git = "https://github.com/Quantova/QVM.git", rev = "faf4870915c3419fa5e350e3257bfffd1074fe1f" }
