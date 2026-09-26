@@ -23,14 +23,14 @@ qtv-vrf = { git = "https://github.com/Quantova/QVRF.git", rev = "e5365bb24448828
 qtv-vm = { git = "https://github.com/Quantova/QVM.git", rev = "faf4870915c3419fa5e350e3257bfffd1074fe1f" }
 
 # The chain library crates and the node, the mempool to finalized block pipeline.
-qtv-idfmt = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "5f306d3b14fc7c7b02a60afa90921d5f82583e8c" }
-qtv-codec = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "5f306d3b14fc7c7b02a60afa90921d5f82583e8c" }
-qtv-account = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "5f306d3b14fc7c7b02a60afa90921d5f82583e8c" }
-qtv-tx = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "5f306d3b14fc7c7b02a60afa90921d5f82583e8c" }
-qtv-block = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "5f306d3b14fc7c7b02a60afa90921d5f82583e8c" }
-qtv-state = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "5f306d3b14fc7c7b02a60afa90921d5f82583e8c" }
-qtv-node = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "5f306d3b14fc7c7b02a60afa90921d5f82583e8c" }
-qtv-net = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "5f306d3b14fc7c7b02a60afa90921d5f82583e8c" }
+qtv-idfmt = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "d23add0ed5f2ac09deffd9d6f3780d1e40c83f5e" }
+qtv-codec = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "d23add0ed5f2ac09deffd9d6f3780d1e40c83f5e" }
+qtv-account = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "d23add0ed5f2ac09deffd9d6f3780d1e40c83f5e" }
+qtv-tx = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "d23add0ed5f2ac09deffd9d6f3780d1e40c83f5e" }
+qtv-block = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "d23add0ed5f2ac09deffd9d6f3780d1e40c83f5e" }
+qtv-state = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "d23add0ed5f2ac09deffd9d6f3780d1e40c83f5e" }
+qtv-node = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "d23add0ed5f2ac09deffd9d6f3780d1e40c83f5e" }
+qtv-net = { git = "https://github.com/Quantova/Quantova-Chain.git", rev = "d23add0ed5f2ac09deffd9d6f3780d1e40c83f5e" }
 
 # The consensus crates, the committee sampler, the attestation, and the finality
 # certificate the verifying validator checks.
