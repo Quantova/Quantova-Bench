@@ -34,7 +34,7 @@ fn env_usize(name: &str, default: usize) -> usize {
 /// Verify every signature in the block in parallel over `cores` worker threads,
 fn parallel_verify(block: &[SignedTx], cores: usize) -> usize {
     let cores = cores.max(1);
-    let chunk = block.len().div_ceil(cores);
+    let chunk = block.len().div_ceil(cores).max(1);
     thread::scope(|scope| {
         let mut handles = Vec::new();
         for part in block.chunks(chunk) {
