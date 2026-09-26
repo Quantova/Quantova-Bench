@@ -2,7 +2,7 @@
 
 This repository holds the throughput and finality benchmark for the Quantova stack. It drives a realistic transaction mix through the real chain crates to a real finality certificate, holds the verifying side to a documented server class validator node, counts only transactions that actually finalize, and reports the sustained transactions per second, the finality latency under a global topology, a phone class secondary figure, and an evidence based attribution of the bottleneck. It measures and attributes. It does not tune the pipeline to reach a target. Governed by the crypto policy in the Quantova Specs repository. Commits are authored by the owner only. Dual licensed under Apache 2.0 and MIT.
 
-The benchmark depends on the stack crates by git tag. The chain crates and the node come from Quantova-Chain v0.4.0, the machine qtv-vm from QVM v0.2.0, the consensus crates from QRC-CONSENSUS v0.2.0, and the cryptography from Q-Crypto v0.3.0. The pins live in `Cargo.toml` and `.cargo/config.toml` sets git fetch with the command line git. No classical cryptography is present, and `cargo deny` enforces that.
+The benchmark depends on the stack crates by exact git commit. The chain crates and the node come from Quantova-Chain, the machine qtv-vm from QVM, the consensus crates from QRC-CONSENSUS, and the cryptography from Q-Crypto. The pinned commits live in `Cargo.toml` and `.cargo/config.toml` sets git fetch with the command line git. No classical cryptography is present, and `cargo deny` enforces that.
 
 ## What it measures
 
