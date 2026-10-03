@@ -206,7 +206,7 @@ pub fn execute_token(sender_bal: u64, recipient_bal: u64, amount: u64, fee: u64)
         memory[slot * 32..slot * 32 + 32].copy_from_slice(&key);
         storage.insert(key, value);
     }
-    let out = Interpreter::new(&code, &consts, TOKEN_METER)
+    let out = Interpreter::for_system_program(&code, &consts, TOKEN_METER)
         .with_storage(storage)
         .with_memory(&memory)
         .run()
