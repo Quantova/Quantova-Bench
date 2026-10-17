@@ -64,8 +64,7 @@ fn ms(ns: f64) -> String {
 mod pins;
 
 fn main() {
-    // The 150 ms slot target, the same consensus parameter the main benchmark uses.
-    const SLOT_MS: f64 = 150.0;
+    let slot_ms = qtv_bft::params::SLOT_MS as f64;
 
     // Real keys. The VRF key pair and the ML-DSA attestation key are each derived
     // from a fixed seed so the run is reproducible, but every operation below is the
@@ -89,9 +88,7 @@ fn main() {
     let empty_ctx: [u8; 0] = [];
     let deterministic_rnd = [0u8; 32];
 
-    // The SLH-DSA VRF prove is slow, so it runs few reps; the ML-DSA sign runs more.
-    // Medians and spreads are reported either way.
-    let slh_prove = measure(5, || {
+    let vrf_prove = measure(200, || {
         black_box(
             vrf.prove(black_box(VRF_POSITION), black_box(&vrf_input))
                 .unwrap(),
@@ -106,17 +103,22 @@ fn main() {
         ));
     });
 
-    let attestation_cost = slh_prove.median + attest_sign.median;
+    let attestation_cost = vrf_prove.median + attest_sign.median;
 
     let rule = || println!("{}", "-".repeat(72));
 
     println!("========================================================================");
-    println!(" Per-member attestation cost: SLH-DSA VRF");
+    println!(" Per-member attestation cost: one-time hash VRF (qtv-vrf onetime)");
     println!("========================================================================");
-    println!(" Same host, release build (lto, one codegen unit), real keys and real");
-    println!(" operations. The attestation cost is one VRF prove plus one ML-DSA");
-    println!(" attestation signature, what a committee member does per slot on the");
-    println!(" critical path. Slot target: {:.0} ms.", SLOT_MS);
+    println!(
+        " Build profile: {}. One VRF prove plus one ML-DSA signature, timed on this host.",
+        if cfg!(debug_assertions) {
+            "debug"
+        } else {
+            "release"
+        }
+    );
+    println!(" Slot parameter: {:.0} ms.", slot_ms);
     println!(
         " Q-Crypto pinned by git rev {}.",
         pins::short_rev("qtv-crypto")
@@ -124,9 +126,9 @@ fn main() {
     rule();
     println!(" Measured terms (median, 10-90 spread):");
     println!(
-        "   SLH-DSA VRF prove        {:>12}   spread {:>12}",
-        ms(slh_prove.median),
-        ms(slh_prove.spread())
+        "   one-time VRF prove       {:>12}   spread {:>12}",
+        ms(vrf_prove.median),
+        ms(vrf_prove.spread())
     );
     println!(
         "   ML-DSA  attestation sign {:>12}   spread {:>12}",
@@ -137,18 +139,17 @@ fn main() {
     println!(" Per-member attestation cost (VRF prove + ML-DSA sign):");
     println!(
         "   {:>12}  +  {:>12}  =  {:>12}",
-        ms(slh_prove.median),
+        ms(vrf_prove.median),
         ms(attest_sign.median),
         ms(attestation_cost)
     );
     rule();
-    println!(" Projected finality floor (the attestation cost is the compute floor on");
-    println!(" the critical path):");
+    println!(" Per-member attestation cost as a multiple of the slot parameter:");
     println!(
-        "   {:>10}  =  {:.1}x the {:.0} ms slot",
+        "   {:>10}  =  {:.3}x the {:.0} ms slot",
         ms(attestation_cost),
-        attestation_cost / 1e6 / SLOT_MS,
-        SLOT_MS
+        attestation_cost / 1e6 / slot_ms,
+        slot_ms
     );
     println!("========================================================================");
 }

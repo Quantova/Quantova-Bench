@@ -17,8 +17,7 @@ pub struct ServerProfile {
 impl ServerProfile {
     pub fn host() -> ServerProfile {
         ServerProfile {
-            name:
-                "Apple M4, 10 cores (4 performance + 6 efficiency), 16 GB, as a modest server node",
+            name: "reference server profile",
             verify_cores: 4,
             uplink_bps: 1_000_000_000,
             memory_gb: 16,

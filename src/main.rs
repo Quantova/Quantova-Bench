@@ -107,19 +107,32 @@ fn main() {
     println!("================================================================================");
     println!(" Quantova throughput and finality benchmark");
     println!("================================================================================");
-    println!(" Build: release, lto, one codegen unit. Stack pinned to the production flow:");
+    println!(
+        " Build profile: {}. Stack pins read from Cargo.toml:",
+        if cfg!(debug_assertions) {
+            "debug"
+        } else {
+            "release"
+        }
+    );
     println!("   {}", pins::stack_line());
     println!();
-    println!(" Primary (server class) validator node profile:");
+    println!(" Validator node profile (configured and assumed inputs, not measured):");
     println!("   {}", server.name);
-    println!("   parallel verify cores: {}", server.verify_cores);
     println!(
-        "   uplink: {} Gbps symmetric",
+        "   host: {} {}, {} hardware threads reported",
+        std::env::consts::OS,
+        std::env::consts::ARCH,
+        thread::available_parallelism().map_or(0, |n| n.get())
+    );
+    println!("   parallel verify cores used: {}", server.verify_cores);
+    println!(
+        "   assumed uplink: {} Gbps symmetric",
         server.uplink_bps / 1_000_000_000
     );
-    println!("   memory: {} GB", server.memory_gb);
+    println!("   assumed memory: {} GB", server.memory_gb);
     println!();
-    println!(" Global topology (documented assumption):");
+    println!(" Global topology (assumed inputs, not measured):");
     println!(
         "   attesting committee spread evenly across regions: {:?}",
         network::REGIONS
@@ -168,7 +181,7 @@ fn main() {
     let token_pct = 100.0 * wl.token_calls as f64 / block_n as f64;
     let native_pct = 100.0 * wl.native_calls as f64 / block_n as f64;
     println!();
-    println!(" Transaction mix (realistic, no no-op transactions):");
+    println!(" Transaction mix (fixed shares set by the workload):");
     println!(
         "   native transfers between distinct accounts : {:>6} ({:.1}%)",
         wl.native_calls, native_pct
@@ -177,7 +190,7 @@ fn main() {
         "   issuer token standard transfer calls       : {:>6} ({:.1}%)",
         wl.token_calls, token_pct
     );
-    println!("   every tx signed with a real ML-DSA key and verified on the path");
+    println!("   every tx carries an ML-DSA signature that is verified in every measured block");
     println!(
         "   mean transaction wire size: {:.0} bytes; block wire size: {:.2} MB",
         per_tx_bytes,
@@ -186,7 +199,7 @@ fn main() {
     rule();
 
     // ---- steady-state compute measurements ----
-    println!(" Steady-state compute costs (server node, release), median and 10-90 spread:");
+    println!(" Compute costs measured in this run, median and 10-90 spread:");
     println!();
 
     let sig = Summary::of(&measure(30, || {
@@ -241,10 +254,7 @@ fn main() {
         let block = qtv_attest::Block::new(1, [7u8; 32], qtv_attest::Parent::Genesis);
         std::hint::black_box(a.attest(consensus::CHAIN_ID, 1, 1, 0, [0u8; 32], block, &beacon));
     }));
-    println!(
-        "     {:>10} median   (this is per member, done in parallel across the committee)",
-        ms(attest.median)
-    );
+    println!("     {:>10} median per member", ms(attest.median));
 
     // Build a real certificate and measure its verification.
     println!(
@@ -273,22 +283,20 @@ fn main() {
     let aead_mbps = transport::seal_open_mbps(&sample, 5_000);
     println!("   post-quantum channel seal/open (ChaCha20-Poly1305 over ML-KEM + ML-DSA)");
     println!(
-        "     {:.0} MB/s ({:.1} Gbps) single stream, above the {} Gbps uplink so the AEAD is not",
+        "     {:.0} MB/s ({:.1} Gbps) single stream, {:.1}x the assumed {} Gbps uplink",
         aead_mbps,
         aead_mbps * 8.0 / 1000.0,
+        aead_mbps * 8.0 * 1e6 / server.uplink_bps as f64,
         server.uplink_bps / 1_000_000_000
-    );
-    println!(
-        "     the limit at 1 Gbps, but a 10 Gbps node must spread record encryption over cores."
     );
     rule();
 
     // ---- live sustained verification run ----
     println!(
-        " Sustained verification run (real {} s, real 150 ms is the slot target):",
-        run_secs
+        " Sustained verification run ({} s, slot parameter {} ms):",
+        run_secs, slot_ms
     );
-    println!("   a server node verifies finalized blocks back to back: parallel signature");
+    println!("   blocks are verified back to back: parallel signature");
     println!("   verification, sequential execution, state root, and real certificate check.");
     println!("   Only transactions in blocks whose certificate verifies are counted.");
     let deadline = Instant::now() + Duration::from_secs(run_secs as u64);
@@ -327,7 +335,7 @@ fn main() {
         verify_tps
     );
     println!(
-        "   (this is the rate a node keeps up with, using the real {}-member certificate)",
+        "   measured with the real {}-member certificate",
         cert.attesters
     );
     rule();
@@ -338,10 +346,13 @@ fn main() {
     let cert_bytes_target = certificate_bytes(target_atts);
     let member_keys_bytes = target_atts * PER_MEMBER_KEY_BYTES;
     println!(
-        " Projection to the {}-member stage-one committee (verification is a flat",
+        " Projection to a {}-member committee, linear in the per attestation cost and size",
         committee_target
     );
-    println!(" per-attestation loop, so it scales linearly, confirmed on the real certificate):");
+    println!(
+        " measured on the real {}-member certificate (the larger certificate is not built):",
+        cert.attesters
+    );
     println!("   certificate verification: {}", ms(verify_cert_target_ns));
     println!(
         "   certificate wire size   : {:.2} MB ({} bytes per attestation)",
@@ -379,7 +390,7 @@ fn main() {
         server.uplink_bytes_per_sec(),
     );
     println!(
-        " Finality latency under the global topology (single-slot BFT, committee {}):",
+        " Modelled finality latency (measured compute, assumed topology, uplink and aggregation, committee {}):",
         committee_target
     );
     println!(
@@ -403,7 +414,7 @@ fn main() {
         ms(fin.disseminate_attestations * 1e6)
     );
     println!(
-        "   aggregate certificate                     {:>10}",
+        "   aggregate certificate (assumed)           {:>10}",
         ms(fin.aggregate * 1e6)
     );
     println!(
@@ -416,18 +427,18 @@ fn main() {
         fin.total_ms()
     );
     let block_time_s = fin.total_ms() / 1000.0;
-    println!("   beacon-chained block time = finality path; chain throughput = block / block time");
+    println!("   model: block time equals the finality latency, throughput is block size over block time");
     println!(
-        "   sustained chain throughput at block {}: {:.0} finalized TPS",
+        "   modelled chain throughput at block {}: {:.0} finalized TPS",
         block_n,
         block_n as f64 / block_time_s
     );
     rule();
 
     // ---- parameter re-examination ----
-    println!(" Parameter re-examination (phone budget removed): sweep the batch size.");
+    println!(" Batch size sweep, each row scales the measured per tx costs to that batch and");
     println!(
-        " Each row rebuilds the finality path for that batch; committee held at {}.",
+        " rebuilds the modelled finality path, committee held at {}.",
         committee_target
     );
     println!();
@@ -488,12 +499,9 @@ fn main() {
         server.uplink_bps / 1_000_000_000,
         network::gossip_hops(committee_target)
     );
-    println!(
-        "     ~{:.0} TPS ({:.0} byte tx). A 10 Gbps node lifts this ~10x.",
-        bw_ceiling, per_tx_bytes
-    );
+    println!("     ~{:.0} TPS ({:.0} byte tx)", bw_ceiling, per_tx_bytes);
     println!();
-    println!(" Sweep the committee size (certificate cost and size scale linearly):");
+    println!(" Committee size sweep, projected linearly from the measured per attestation cost and size:");
     println!(
         "   {:>10}  {:>16}  {:>14}",
         "committee", "cert verify ms", "cert size MB"
@@ -506,8 +514,7 @@ fn main() {
     rule();
 
     // ---- primary headline ----
-    println!(" PRIMARY FIGURE (server class, global topology, only finalized tx counted):");
-    println!("   throughput and finality trade against batch size, so both operating points:");
+    println!(" Operating points of the modelled batch sweep:");
     println!(
         "   fastest finality : {:.0} ms at batch {} -> {:.0} finalized TPS",
         best_finality, best_finality_batch, best_finality_tps
@@ -516,22 +523,16 @@ fn main() {
         "   peak throughput  : {:.0} finalized TPS at batch {} -> {:.0} ms finality",
         peak_tps, peak_batch, peak_finality
     );
-    println!("   modelled finality floor is now propagation and verification, not the VRF, and is");
-    println!(
-        "   near batch-independent; throughput is bandwidth-bound (~{:.0} TPS at {} Gbps).",
-        bw_ceiling,
-        server.uplink_bps / 1_000_000_000
-    );
     rule();
 
     // ---- phone-class secondary ----
-    println!(" Phone-class secondary figure (can a phone participate at all?):");
+    println!(" Phone class figure (host measurements times an assumed derate):");
     let phone_verify_block_ns =
         (sig.median + exec.median + root.median) * phone.single_thread_derate;
     let phone_verify_cert_ns = verify_cert_target_ns * phone.single_thread_derate;
     let phone_attest_ns = attest.median * phone.single_thread_derate;
     println!(
-        "   {} (host figures x{:.0} single-thread derate)",
+        "   {} (assumed x{:.0} single-thread derate)",
         phone.name, phone.single_thread_derate
     );
     println!(
@@ -554,46 +555,62 @@ fn main() {
         slot_ms,
         if phone_slot_ok { "yes" } else { "no" }
     );
-    println!(
-        "   verdict: a phone cannot keep the {} ms slot at the stage-one committee; it is a",
-        slot_ms
-    );
-    println!("            secondary data point and sets no parameter.");
     rule();
 
-    // ---- bottleneck verdict ----
-    println!(" Bottleneck, from the evidence above:");
-    println!("   1. Attestation is no longer the finality floor. The module lattice VRF prove");
+    println!(" Attribution, computed from the figures above:");
     println!(
-        "      and sign is {} per member, a fraction of a millisecond, so the modelled",
-        ms(attest.median)
+        "   modelled finality terms at block {}, largest first:",
+        block_n
     );
-    println!("      finality floor is now block propagation, block verification, attestation");
-    println!("      dissemination, and certificate verification, not the VRF.");
+    let mut terms = [
+        ("leader build", fin.build),
+        ("propagate block", fin.propagate_block),
+        ("verify block", fin.verify_block),
+        ("attestation production", fin.attest),
+        ("disseminate attestations", fin.disseminate_attestations),
+        ("aggregate certificate", fin.aggregate),
+        ("verify certificate", fin.verify_certificate),
+    ];
+    terms.sort_by(|a, b| b.1.total_cmp(&a.1));
+    for (name, term) in terms {
+        println!(
+            "     {:<26} {:>10}  {:>5.1}%",
+            name,
+            ms(term * 1e6),
+            100.0 * term / fin.total_ms()
+        );
+    }
     println!(
-        "   2. The stage-one certificate ({:.1} MB, {}) is the second cost: its size and",
-        cert_bytes_target as f64 / 1e6,
-        ms(verify_cert_target_ns)
+        "   projected verification slot shares: signatures {:.1}%, execution {:.1}%, state root {:.1}%, certificate {:.1}%",
+        100.0 * sig.median / verify_slot_proj_ns,
+        100.0 * exec.median / verify_slot_proj_ns,
+        100.0 * root.median / verify_slot_proj_ns,
+        100.0 * verify_cert_target_ns / verify_slot_proj_ns
     );
-    println!("      verification both scale with committee size. This is where the batch-proof");
-    println!("      and bandwidth tension now lives, not in the transaction batch.");
+    let bound = |tps: f64| {
+        if bw_ceiling < tps {
+            "bandwidth"
+        } else {
+            "compute"
+        }
+    };
+    let projected_tps = block_n as f64 / (verify_slot_proj_ns / 1e9);
     println!(
-        "   3. Transaction throughput is {} bound here: bandwidth allows ~{:.0} TPS at {} Gbps and verification measured {:.0} TPS:",
-        if bw_ceiling < verify_tps { "bandwidth" } else { "compute" },
+        "   bandwidth ceiling ~{:.0} TPS at the assumed {} Gbps",
         bw_ceiling,
-        server.uplink_bps / 1_000_000_000,
-        verify_tps
+        server.uplink_bps / 1_000_000_000
     );
     println!(
-        "      server cores verify a large batch cheaply ({} / tx), so the phone-era pressure",
-        us(sig.median / block_n as f64)
+        "   with the real {}-member certificate: verification {:.0} TPS, {} bound",
+        cert.attesters,
+        verify_tps,
+        bound(verify_tps)
     );
     println!(
-        "      to keep batches small has dissolved for the batch. Execution is sequential but"
-    );
-    println!(
-        "      minor ({} / tx); sequential execution is not the binding constraint.",
-        us(exec.median / block_n as f64)
+        "   with the projected {}-member certificate: verification {:.0} TPS, {} bound",
+        committee_target,
+        projected_tps,
+        bound(projected_tps)
     );
     println!("================================================================================");
 }
