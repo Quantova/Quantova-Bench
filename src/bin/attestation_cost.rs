@@ -145,11 +145,10 @@ fn main() {
     println!(" Projected finality floor (the attestation cost is the compute floor on");
     println!(" the critical path):");
     println!(
-        "   {:>10}  =  {:.1}x the {:.0} ms slot; the VRF prove alone overruns the slot,",
+        "   {:>10}  =  {:.1}x the {:.0} ms slot",
         ms(attestation_cost),
         attestation_cost / 1e6 / SLOT_MS,
         SLOT_MS
     );
-    println!("   so the attestation is the binding term whatever the hardware.");
     println!("========================================================================");
 }

@@ -577,8 +577,13 @@ fn main() {
     );
     println!("      verification both scale with committee size. This is where the batch-proof");
     println!("      and bandwidth tension now lives, not in the transaction batch.");
-    println!("   3. Transaction throughput is bandwidth-bound (~{:.0} TPS at {} Gbps), not compute-bound:",
-        bw_ceiling, server.uplink_bps / 1_000_000_000);
+    println!(
+        "   3. Transaction throughput is {} bound here: bandwidth allows ~{:.0} TPS at {} Gbps and verification measured {:.0} TPS:",
+        if bw_ceiling < verify_tps { "bandwidth" } else { "compute" },
+        bw_ceiling,
+        server.uplink_bps / 1_000_000_000,
+        verify_tps
+    );
     println!(
         "      server cores verify a large batch cheaply ({} / tx), so the phone-era pressure",
         us(sig.median / block_n as f64)
@@ -590,7 +595,5 @@ fn main() {
         "      minor ({} / tx); sequential execution is not the binding constraint.",
         us(exec.median / block_n as f64)
     );
-    println!("   The faster VRF lever has landed, module lattice replacing the hash based VRF, so");
-    println!("   the remaining levers are propagation and a succinct (stage-two) certificate.");
     println!("================================================================================");
 }
