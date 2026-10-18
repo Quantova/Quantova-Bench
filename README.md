@@ -2,7 +2,7 @@
 
 This repository holds the throughput and finality benchmark for the Quantova stack. It drives a fixed transaction mix through the real chain crates to a real finality certificate, counts only transactions in blocks whose certificate verifies, and prints the measured compute costs together with figures derived from them under stated assumptions. It measures and derives. It does not tune the pipeline to reach a target and it prints no conclusion that the run did not compute. Governed by the crypto policy in the Quantova Specs repository. Commits are authored by the owner only. Dual licensed under Apache 2.0 and MIT.
 
-The benchmark depends on the stack crates by exact git commit. The chain crates and the node come from Quantova-Chain, the machine qtv-vm from QVM, the consensus crates from QRC-CONSENSUS, the one time verifiable random function from QVRF, and the cryptography from Q-Crypto. The pinned commits live in `Cargo.toml`, the resolved commits are recorded in the committed `Cargo.lock`, and `.cargo/config.toml` sets git fetch with the command line git. The run prints the pins it was built with. No classical cryptography is present, and `cargo deny` enforces that.
+The benchmark depends on the stack crates by exact git commit. The chain crates and the node come from Quantova-Chain, the machine qtv-vm from QVM, the consensus crates and the one time committee credential from QRC-CONSENSUS, and the cryptography from Q-Crypto. The pinned commits live in `Cargo.toml`, the resolved commits are recorded in the committed `Cargo.lock`, and `.cargo/config.toml` sets git fetch with the command line git. The run prints the pins it was built with. No classical cryptography is present, and `cargo deny` enforces that.
 
 ## What it measures
 
@@ -37,7 +37,7 @@ QTV_BENCH_ACCOUNTS=500 QTV_BENCH_BLOCK=500 QTV_BENCH_COMMITTEE_REAL=8 QTV_BENCH_
 
 The variables are the funded account count, the block size in transactions, the real committee actually built and measured, and the steady state duration in seconds. The target committee for the projection is the sampler committee budget.
 
-A second binary times one prove of the one time hash based verifiable random function from QVRF and one ML-DSA signature, and prints their sum and its ratio to the slot parameter.
+A second binary times one reveal of the one time committee credential and one ML-DSA signature, and prints their sum and its ratio to the slot parameter.
 
 ```
 cargo run --locked --release --bin attestation_cost

@@ -40,7 +40,7 @@ fn parallel_verify(block: &[SignedTx], cores: usize) -> usize {
         for part in block.chunks(chunk) {
             handles.push(scope.spawn(move || {
                 part.iter()
-                    .filter(|tx| qtv_tx::verify(&tx.wrapper, &tx.pubkey))
+                    .filter(|tx| qtv_tx::verify(&tx.wrapper, &tx.pubkey, &consensus::GENESIS))
                     .count()
             }));
         }
@@ -242,8 +242,8 @@ fn main() {
         ms(root.spread())
     );
 
-    // Attestation production: the committee membership VRF and the ML-DSA signature.
-    println!("   attestation production (VRF prove + ML-DSA sign), one member ...");
+    // Attestation production: the one time committee credential and the ML-DSA signature.
+    println!("   attestation production (credential reveal + ML-DSA sign), one member ...");
     let attest = Summary::of(&measure(2, || {
         let a = qtv_attest::Attester::from_secret(
             1,
@@ -252,13 +252,13 @@ fn main() {
         );
         let beacon = qtv_sampler::beacon::Beacon::genesis();
         let block = qtv_attest::Block::new(1, [7u8; 32], qtv_attest::Parent::Genesis);
-        std::hint::black_box(a.attest(consensus::CHAIN_ID, 1, 1, 0, [0u8; 32], block, &beacon));
+        std::hint::black_box(a.attest(consensus::binding(), 1, 1, 0, [0u8; 32], block, &beacon));
     }));
     println!("     {:>10} median per member", ms(attest.median));
 
     // Build a real certificate and measure its verification.
     println!(
-        "   building a real {}-member finality certificate (each attestation runs the VRF) ...",
+        "   building a real {}-member finality certificate (each attestation reveals a credential) ...",
         committee_real
     );
     let header_hash = wl.ledger.q_root();
@@ -406,7 +406,7 @@ fn main() {
         ms(fin.verify_block * 1e6)
     );
     println!(
-        "   attestation production (VRF prove)        {:>10}",
+        "   attestation production (credential reveal)  {:>10}",
         ms(fin.attest * 1e6)
     );
     println!(
@@ -546,7 +546,7 @@ fn main() {
         ms(phone_verify_cert_ns)
     );
     println!(
-        "   produce one attestation (VRF prove): {}",
+        "   produce one attestation (credential reveal): {}",
         ms(phone_attest_ns)
     );
     let phone_slot_ok = (phone_verify_block_ns + phone_verify_cert_ns) / 1e6 < slot_ms as f64;

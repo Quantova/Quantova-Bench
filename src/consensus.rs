@@ -5,25 +5,30 @@
 
 use qtv_attest::aggregate::aggregate;
 use qtv_attest::params::finality_threshold;
-use qtv_attest::{Attester, Block, CommitteeCommitment, Parent};
+use qtv_attest::{Attester, Block, ChainBinding, CommitteeCommitment, Parent};
 use qtv_sampler::beacon::Beacon;
 use qtv_sampler::committee::{CommitteeView, PublishedReveal};
-use qtv_sampler::params::COMMITTEE_BUDGET;
-use qtv_sampler::validator::{Registration, SamplerValidator};
+use qtv_sampler::onetime::{NODE_BYTES, PREIMAGE_BYTES};
+use qtv_sampler::validator::{Registration, SamplerValidator, DEFAULT_SLOTS};
 
 /// The chain the benchmark builds and verifies certificates under. A certificate is bound to
 pub const CHAIN_ID: u64 = qtv_tx::LOCAL_CHAIN_ID;
 
-/// The wire size of one stage one attestation: the ML-DSA signature, the VRF
-#[allow(deprecated)]
+pub const GENESIS: [u8; 32] = [0u8; 32];
+
+pub fn binding() -> ChainBinding {
+    ChainBinding::new(CHAIN_ID, GENESIS)
+}
+
+/// The wire size of one stage one attestation: the ML-DSA signature, the one time credential
 pub const PER_ATTESTATION_BYTES: usize = qtv_crypto::ml_dsa::SIGNATURE_BYTES
-    + qtv_crypto::slh_dsa::SIGNATURE_BYTES
-    + qtv_vrf::OUTPUT_LEN
+    + 8
+    + PREIMAGE_BYTES
+    + DEFAULT_SLOTS.trailing_zeros() as usize * NODE_BYTES
     + 24;
 
 /// The wire size of one committee member entry a verifier must hold: the ML-DSA
-pub const PER_MEMBER_KEY_BYTES: usize =
-    qtv_crypto::ml_dsa::PUBLIC_KEY_BYTES + qtv_crypto::slh_dsa::PUBLIC_KEY_BYTES;
+pub const PER_MEMBER_KEY_BYTES: usize = qtv_crypto::ml_dsa::PUBLIC_KEY_BYTES + NODE_BYTES + 8;
 
 /// A built real certificate, its committee commitment, and the beacon it was
 pub struct RealCertificate {
@@ -77,8 +82,13 @@ impl RealCertificate {
             .iter()
             .filter_map(|id| attesters.iter().find(|a| a.id() == *id))
             .collect();
-        let commitment =
-            CommitteeCommitment::from_attesters_with_budget(slot, &refs, COMMITTEE_BUDGET);
+        let commitment = CommitteeCommitment::from_view(slot, &view, &committee, |id| {
+            attesters
+                .iter()
+                .find(|a| a.id() == id)
+                .map(|a| *a.attest_public_key())
+        })
+        .expect("every committee member has an attestation key");
 
         // The block value is the real block header hash. Now that a block carries a
         // full 32 byte value, the committee attests over the header directly, so the
@@ -87,12 +97,12 @@ impl RealCertificate {
         // The quorum a certificate needs is the two thirds finality threshold of the
         // committee. A fully online committee clears it, and the verifier applies the
         // same threshold, so build and check share one canonical value.
-        let tau = finality_threshold(member_ids.len() as u64);
+        let tau = finality_threshold(commitment.len() as u64);
         let attestations: Vec<_> = refs
             .iter()
             .filter_map(|a| {
                 a.attest(
-                    CHAIN_ID,
+                    binding(),
                     height,
                     slot,
                     0,
@@ -103,7 +113,7 @@ impl RealCertificate {
             })
             .collect();
         let cert = aggregate(
-            CHAIN_ID,
+            binding(),
             height,
             slot,
             block,
@@ -126,7 +136,7 @@ impl RealCertificate {
     /// Verify the certificate against its commitment and beacon, the exact check
     pub fn verify(&self) -> bool {
         self.cert
-            .verify(CHAIN_ID, &self.commitment, &self.beacon, self.tau)
+            .verify_with_trusted_commitment(binding(), &self.commitment, &self.beacon, self.tau)
             .is_verified()
     }
 }

@@ -8,7 +8,7 @@ use qtv_codec::Encoder;
 use qtv_node::execution::{execute_transfer, transfer_call, TRANSFER_METER};
 use qtv_node::fee::FeeParams;
 use qtv_node::ledger::{Account, Ledger};
-use qtv_tx::{sign, Body, Call, Wrapper};
+use qtv_tx::{try_sign, Body, Call, Wrapper};
 use qtv_vm::abi::scalar_key;
 use qtv_vm::asm::assemble;
 use qtv_vm::interp::Interpreter;
@@ -106,8 +106,17 @@ impl Workload {
                     TOKEN_METER,
                 ),
             };
-            let body = Body::new(sender.address(), 0, meter, u128::from(fee), call);
-            let wrapper = sign(sender, &body);
+            let body = Body::with_context(
+                sender.address(),
+                0,
+                meter,
+                u128::from(fee),
+                call,
+                0,
+                crate::consensus::CHAIN_ID,
+            );
+            let wrapper = try_sign(sender, &body, &crate::consensus::GENESIS)
+                .expect("a canonical transfer signs");
             match kind {
                 Kind::Token => token_calls += 1,
                 Kind::Native => native_calls += 1,
@@ -204,7 +213,7 @@ pub fn execute_token(sender_bal: u64, recipient_bal: u64, amount: u64, fee: u64)
         memory[slot * 32..slot * 32 + 32].copy_from_slice(&key);
         storage.insert(key, value);
     }
-    let out = Interpreter::for_system_program(&code, &consts, TOKEN_METER)
+    let out = Interpreter::for_unchecked_program(&code, &consts, TOKEN_METER)
         .with_storage(storage)
         .with_memory(&memory)
         .run()

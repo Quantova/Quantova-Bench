@@ -1,15 +1,13 @@
 // Copyright 2026 Quantova Inc
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//! Per-member attestation cost under the committee membership VRF.
-#![allow(deprecated)]
+//! Per-member attestation cost under the one-time committee credential.
 
 use std::hint::black_box;
 use std::time::Instant;
 
 use qtv_crypto::{ml_dsa, sha3::shake256};
-use qtv_vrf::onetime::OneTimeVrf;
-use qtv_vrf::Vrf;
+use qtv_sampler::validator::SamplerValidator;
 
 /// A distribution over nanosecond samples: median and the 10-90 spread.
 struct Summary {
@@ -66,33 +64,26 @@ mod pins;
 fn main() {
     let slot_ms = qtv_bft::params::SLOT_MS as f64;
 
-    // Real keys. The VRF key pair and the ML-DSA attestation key are each derived
-    // from a fixed seed so the run is reproducible, but every operation below is the
-    // real signing and hashing path, not a stub.
-    const VRF_HEIGHT: u32 = 10;
-    const VRF_POSITION: u64 = 7;
-    const VRF_HOLDER: u64 = 1;
+    const CREDENTIAL_SLOT: u64 = 7;
+    const CREDENTIAL_HOLDER: u64 = 1;
     let mut master_seed = [0u8; 32];
     shake256(
-        b"quantova attestation cost one-time vrf key",
+        b"quantova attestation cost one-time credential key",
         &mut master_seed,
     );
-    let vrf = OneTimeVrf::keygen(&master_seed, VRF_HEIGHT, VRF_HOLDER).unwrap();
+    let sampler = SamplerValidator::from_secret(
+        CREDENTIAL_HOLDER,
+        &master_seed,
+        qtv_bft::params::VALIDATOR_STAKE_QTOV,
+    );
     let (_attest_pk, attest_sk) = ml_dsa::keygen(&[42u8; 32]);
 
-    // The VRF input a committee member evaluates is the sortition seed for the slot;
-    // the attestation message is the block-and-slot digest it signs. Representative
-    // 32-byte values, the sizes the real path carries.
-    let vrf_input = [17u8; 32];
     let attest_msg = [34u8; 32];
     let empty_ctx: [u8; 0] = [];
     let deterministic_rnd = [0u8; 32];
 
-    let vrf_prove = measure(200, || {
-        black_box(
-            vrf.prove(black_box(VRF_POSITION), black_box(&vrf_input))
-                .unwrap(),
-        );
+    let credential = measure(200, || {
+        black_box(sampler.reveal(black_box(CREDENTIAL_SLOT)).unwrap());
     });
     let attest_sign = measure(200, || {
         black_box(ml_dsa::sign(
@@ -103,15 +94,15 @@ fn main() {
         ));
     });
 
-    let attestation_cost = vrf_prove.median + attest_sign.median;
+    let attestation_cost = credential.median + attest_sign.median;
 
     let rule = || println!("{}", "-".repeat(72));
 
     println!("========================================================================");
-    println!(" Per-member attestation cost: one-time hash VRF (qtv-vrf onetime)");
+    println!(" Per-member attestation cost: one-time committee credential");
     println!("========================================================================");
     println!(
-        " Build profile: {}. One VRF prove plus one ML-DSA signature, timed on this host.",
+        " Build profile: {}. One credential reveal plus one ML-DSA signature, timed on this host.",
         if cfg!(debug_assertions) {
             "debug"
         } else {
@@ -126,9 +117,9 @@ fn main() {
     rule();
     println!(" Measured terms (median, 10-90 spread):");
     println!(
-        "   one-time VRF prove       {:>12}   spread {:>12}",
-        ms(vrf_prove.median),
-        ms(vrf_prove.spread())
+        "   one-time credential      {:>12}   spread {:>12}",
+        ms(credential.median),
+        ms(credential.spread())
     );
     println!(
         "   ML-DSA  attestation sign {:>12}   spread {:>12}",
@@ -136,10 +127,10 @@ fn main() {
         ms(attest_sign.spread())
     );
     rule();
-    println!(" Per-member attestation cost (VRF prove + ML-DSA sign):");
+    println!(" Per-member attestation cost (credential reveal + ML-DSA sign):");
     println!(
         "   {:>12}  +  {:>12}  =  {:>12}",
-        ms(vrf_prove.median),
+        ms(credential.median),
         ms(attest_sign.median),
         ms(attestation_cost)
     );
