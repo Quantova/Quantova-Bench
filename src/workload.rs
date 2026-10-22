@@ -213,7 +213,25 @@ pub fn execute_token(sender_bal: u64, recipient_bal: u64, amount: u64, fee: u64)
         memory[slot * 32..slot * 32 + 32].copy_from_slice(&key);
         storage.insert(key, value);
     }
-    let out = Interpreter::for_unchecked_program(&code, &consts, TOKEN_METER)
+    let dispatch = qtv_vm::meter::DISPATCH
+        .saturating_add((code.len() as u64).saturating_mul(qtv_vm::meter::CODE_SCAN_PER_BYTE));
+    let selector = qtv_vm::container::selector("transfer()");
+    let container = qtv_vm::container::Container::new(
+        code,
+        consts.to_vec(),
+        vec![qtv_vm::container::Entry {
+            selector,
+            offset: 0,
+            access: qtv_vm::container::StateAccess {
+                reads: (0..TOKEN_SLOTS as u64).collect(),
+                writes: (0..TOKEN_SLOTS as u64).collect(),
+                keyed_reads: Vec::new(),
+                keyed_writes: Vec::new(),
+            },
+        }],
+    );
+    let out = Interpreter::for_entry(&container, selector, TOKEN_METER.saturating_add(dispatch))
+        .expect("the token entry verifies")
         .with_storage(storage)
         .with_memory(&memory)
         .run()
