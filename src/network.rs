@@ -108,3 +108,25 @@ impl Finality {
             + self.verify_certificate
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn one_node_needs_no_gossip_hop() {
+        assert_eq!(gossip_hops(0), 0);
+        assert_eq!(gossip_hops(1), 0);
+        assert_eq!(gossip_hops(GOSSIP_FANOUT), 1);
+        assert_eq!(gossip_hops(GOSSIP_FANOUT * GOSSIP_FANOUT), 2);
+    }
+
+    #[test]
+    fn propagation_grows_with_payload_and_committee() {
+        let small = propagate_ms(1_000, 64, 1e9);
+        assert!(average_hop_latency_ms() > 0.0);
+        assert!(propagate_ms(1_000_000, 64, 1e9) > small);
+        assert!(propagate_ms(1_000, 4_096, 1e9) > small);
+        assert_eq!(propagate_ms(1_000, 1, 1e9), 0.0);
+    }
+}

@@ -241,3 +241,18 @@ pub fn execute_token(sender_bal: u64, recipient_bal: u64, amount: u64, fee: u64)
         out.storage.get(&scalar_key(1)).copied().unwrap_or(0),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_native_transfer_moves_the_amount_and_charges_the_fee() {
+        assert_eq!(execute_native(1_000, 10, 5, 2), (993, 15));
+    }
+
+    #[test]
+    fn a_token_transfer_moves_the_amount_and_charges_the_fee() {
+        assert_eq!(execute_token(1_000, 10, 5, 2), (993, 15));
+    }
+}

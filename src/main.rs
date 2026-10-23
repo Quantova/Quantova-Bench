@@ -614,3 +614,33 @@ fn main() {
     );
     println!("================================================================================");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_benchmark_runs_end_to_end_at_a_small_size() {
+        std::env::set_var("QTV_BENCH_ACCOUNTS", "16");
+        std::env::set_var("QTV_BENCH_BLOCK", "16");
+        std::env::set_var("QTV_BENCH_COMMITTEE_REAL", "4");
+        std::env::set_var("QTV_BENCH_COMMITTEE", "8");
+        std::env::set_var("QTV_BENCH_SECS", "1");
+        main();
+    }
+
+    #[test]
+    fn an_unset_or_malformed_size_falls_back_to_its_default() {
+        assert_eq!(env_usize("QTV_BENCH_UNSET_FOR_TEST", 7), 7);
+        std::env::set_var("QTV_BENCH_MALFORMED_FOR_TEST", "seven");
+        assert_eq!(env_usize("QTV_BENCH_MALFORMED_FOR_TEST", 9), 9);
+    }
+
+    #[test]
+    fn measure_takes_one_sample_per_repetition() {
+        let mut runs = 0;
+        let samples = measure(5, || runs += 1);
+        assert_eq!(samples.len(), 5);
+        assert_eq!(runs, 5);
+    }
+}

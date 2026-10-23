@@ -51,3 +51,29 @@ pub fn ms(ns: f64) -> String {
 pub fn us(ns: f64) -> String {
     format!("{:.2} us", ns / 1_000.0)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_summary_interpolates_between_samples() {
+        let s = Summary::of(&[4.0, 1.0, 3.0, 2.0, 5.0]);
+        assert_eq!(s.median, 3.0);
+        assert!((s.p10 - 1.4).abs() < 1e-9);
+        assert!((s.p90 - 4.6).abs() < 1e-9);
+        assert!((s.spread() - 3.2).abs() < 1e-9);
+    }
+
+    #[test]
+    fn an_empty_or_single_sample_summary_is_defined() {
+        assert_eq!(Summary::of(&[]).median, 0.0);
+        assert_eq!(Summary::of(&[42.0]).p90, 42.0);
+    }
+
+    #[test]
+    fn figures_are_formatted_in_their_units() {
+        assert_eq!(ms(1_500_000.0), "1.500 ms");
+        assert_eq!(us(2_500.0), "2.50 us");
+    }
+}

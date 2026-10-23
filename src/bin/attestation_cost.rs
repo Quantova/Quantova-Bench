@@ -17,6 +17,9 @@ struct Summary {
 }
 
 fn percentile(sorted: &[f64], q: f64) -> f64 {
+    if sorted.is_empty() {
+        return 0.0;
+    }
     if sorted.len() == 1 {
         return sorted[0];
     }
@@ -143,4 +146,23 @@ fn main() {
         slot_ms
     );
     println!("========================================================================");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_attestation_cost_benchmark_runs_end_to_end() {
+        main();
+    }
+
+    #[test]
+    fn the_summary_reports_the_middle_sample() {
+        let s = measure(3, || {});
+        assert!(s.median >= 0.0);
+        assert!(s.spread() >= 0.0);
+        assert_eq!(percentile(&[], 0.5), 0.0);
+        assert_eq!(ms(2_000_000.0), "2.000 ms");
+    }
 }
